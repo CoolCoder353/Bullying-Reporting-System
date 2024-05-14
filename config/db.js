@@ -1,19 +1,21 @@
 const mysql = require('mysql');
 
-const db = mysql.createConnection({
+const pool = mysql.createPool({
     host: 'localhost',
     user: 'root',
     password: '',
-    database: 'bully'
+    database: 'bully',
+    port: 3307 // default port for MariaDB is 3306 but some servers use 3307
 });
 
-db.connect((err) => {
+pool.getConnection((err, conn) => {
     if (err) {
         console.error('Error connecting to the database: ', err);
         process.exit(1);
     } else {
         console.log('Connected to the database');
+        conn.release(); // release the connection back to the pool
     }
 });
 
-module.exports = db;
+module.exports = pool;

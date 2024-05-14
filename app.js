@@ -1,12 +1,12 @@
 // app.js
-
+const path = require('path');
 const express = require('express');
 const bodyParser = require('body-parser');
 const passport = require('passport');
 const session = require('express-session');
 const db = require('./config/db');
-const auth = require('./config/auth')(passport, db);
-const routes = require('./routes/routes')(passport);
+const auth = require(path.join(process.cwd(), 'config', 'auth'))(passport, db);
+const routes = require(path.join(process.cwd(), 'routes', 'routes'))(passport);
 const winston = require('winston');
 const morgan = require('morgan');
 
