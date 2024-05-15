@@ -85,7 +85,7 @@ module.exports = function (passport) {
 
         console.log('Submitting incident: ', student_reporting, student_reported, incident_title, incident_description, incident_date, incident_location, is_annonomous, is_victim, report_Id);
         //Make sure the data is not over the limit of characters
-        if (incident_title.length > 100 || incident_description.length > 250 || incident_location.length > 100, incident_title.length > 5) {
+        if (incident_title.length > 100 || incident_description.length > 250 || incident_location.length > 100, student_reported.length > 5) {
             res.status(400).send('Data is too long.');
             return;
         }
