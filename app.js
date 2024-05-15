@@ -21,6 +21,39 @@ const logger = winston.createLogger({
         new winston.transports.File({ filename: 'logs/combined.log' })
     ]
 });
+// Custom Morgan format
+morgan.format('custom', function (tokens, req, res) {
+    if (res.statusCode >= 400) {
+        return [
+            '<--',
+            tokens.method(req, res),
+            tokens.url(req, res),
+            tokens.status(req, res),
+            tokens.res(req, res, 'content-length'), '-',
+            tokens['response-time'](req, res), 'ms'
+        ].join(' ')
+    } else {
+        return [
+            '-->',
+            tokens.method(req, res),
+            tokens.url(req, res),
+            tokens.status(req, res),
+            tokens.res(req, res, 'content-length'), '-',
+            tokens['response-time'](req, res), 'ms'
+        ].join(' ')
+    }
+});
+
+// Set up Morgan
+app.use(morgan('custom', {
+    skip: function (req, res) { return res.statusCode < 400 },
+    stream: { write: message => logger.error(message.trim()) }
+}));
+
+app.use(morgan('custom', {
+    skip: function (req, res) { return res.statusCode >= 400 },
+    stream: { write: message => logger.info(message.trim()) }
+}));
 
 // Set up Morgan
 app.use(morgan('combined', { stream: { write: message => logger.info(message.trim()) } }));

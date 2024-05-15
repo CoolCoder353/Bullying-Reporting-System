@@ -2,8 +2,11 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const path = require('path');
 const db = require(path.join(process.cwd(), 'config', 'db'));
+const crypto = require('crypto');
 
-const checkAuthenticated = require(path.join(process.cwd(), 'middleware', 'checkAuthenticated'));
+const check = require(path.join(process.cwd(), 'middleware', 'check'));
+const checkAuthenticated = check[0];
+const checkTeacher = check[1];
 const report_status = require(path.join(process.cwd(), 'config', 'config')).report_status;
 
 module.exports = function (passport) {
@@ -37,7 +40,7 @@ module.exports = function (passport) {
                 console.error(err);
                 res.status(500).send('Server error');
             } else {
-                pool.query('INSERT INTO users (username, firstname, lastname, password, is_parent, is_student) VALUES (?, ?, ?, ?, ?, ?)',
+                db.query('INSERT INTO users (username, firstname, lastname, password, is_parent, is_student) VALUES (?, ?, ?, ?, ?, ?)',
                     [username, firstname, lastname, hashedPassword, is_parent, is_student],
                     (err, results) => {
                         if (err) {
@@ -54,7 +57,7 @@ module.exports = function (passport) {
 
     router.get('/authenticated', checkAuthenticated, (req, res) => {
         console.log('User successfully authenticated');
-        res.send("Welcome, authenticated user!<a href='/logout'>Logout</a> <a href='/help'>Help</a><a href='/submit_incident'>Submit Incident</a><a href='/'>Home</a>");
+        res.send("Welcome, authenticated user!<br><a href='/logout'>Logout</a><br><a href='/help'>Help</a><br><a href='/submit_incident'>Submit Incident</a><br><a href='/'>Home</a><br><a href='/view_reports'>View Reports</a>");
 
     });
 
@@ -78,37 +81,31 @@ module.exports = function (passport) {
         const incident_location = req.body.incident_location;
         const is_annonomous = req.body.is_annonomous || 0;
         const is_victim = req.body.is_victim || 0;
+        const report_Id = crypto.randomBytes(16).toString("hex");
 
+        console.log('Submitting incident: ', student_reporting, student_reported, incident_title, incident_description, incident_date, incident_location, is_annonomous, is_victim, report_Id);
+        //Make sure the data is not over the limit of characters
+        if (incident_title.length > 100 || incident_description.length > 250 || incident_location.length > 100, incident_title.length > 5) {
+            res.status(400).send('Data is too long.');
+            return;
+        }
 
         if (student_reported === '' || incident_title === '' || incident_description === '' || incident_date === '' || incident_location === '') {
             res.status(400).send('All fields are required.');
             return;
         }
 
-        let report_Id = -1;
+
         //append the data to the reports table in the database
-        db.query('INSERT INTO `report`(`title`, `description`, `location`, `status`) VALUES (?,?,?,?)',
-            [incident_title, incident_description, incident_location, '1'],
+        db.query('INSERT INTO `report`(`report_id`,`title`, `description`, `location`, `status`) VALUES (?,?,?,?,?)',
+            [report_Id, incident_title, incident_description, incident_location, '1'],
             (err, results) => {
                 if (err) {
                     console.error(err);
                     res.status(500).send('Server error sending report.');
                     return;
                 }
-                else {
-                    db.query('SELECT LAST_INSERT_ID() as report_Id', (err, results) => {
-                        if (err) {
-                            console.error(err);
-                            res.status(500).send('Server error getting report id.');
-                            return;
-                        }
-                        else {
-                            //get the report id from the results
-                            report_Id = results[0].report_Id;
 
-                        }
-                    });
-                }
             });
 
 
@@ -138,9 +135,10 @@ module.exports = function (passport) {
 
 
         //send the user to the help page
-        if (report_Id !== -1) {
-            res.redirect('/help');
-        }
+
+        res.redirect('/help');
+
+
 
 
 
@@ -151,6 +149,10 @@ module.exports = function (passport) {
     });
     router.get("/help", (req, res) => {
         res.sendFile(path.join(process.cwd(), 'public', 'help.html'));
+    });
+
+    router.get("/view_reports", checkAuthenticated, checkTeacher, (req, res) => {
+        res.sendFile(path.join(process.cwd(), 'public', 'view_reports.html'));
     });
     return router;
 }
