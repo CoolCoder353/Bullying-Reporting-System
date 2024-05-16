@@ -69,12 +69,6 @@ app.use('/', routes);
 
 app.listen(3000, () => {
 
-    console.log("Checking logs");
-    logger.info("Info done");
-    logger.warn("Warning done");
-    logger.error("Error done");
-
-
     logger.info('Server is running:');
     logger.info('http://localhost:3000');
     //// logger.info('http://192.168:3000');
