@@ -1,5 +1,6 @@
 const mysql = require('mysql');
-
+const path = require('path');
+const logger = require(path.join(process.cwd(), 'middleware', 'logger'));
 const pool = mysql.createPool({
     host: 'localhost',
     user: 'root',
@@ -10,10 +11,10 @@ const pool = mysql.createPool({
 
 pool.getConnection((err, conn) => {
     if (err) {
-        console.error('Error connecting to the database: ', err);
+        logger.error('Error connecting to the database: ', err);
         process.exit(1);
     } else {
-        console.log('Connected to the database');
+        logger.info('Connected to the database');
         conn.release(); // release the connection back to the pool
     }
 });

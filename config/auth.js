@@ -2,6 +2,7 @@
 const path = require('path');
 const LocalStrategy = require('passport-local').Strategy;
 const bcrypt = require('bcrypt');
+const logger = require(path.join(process.cwd(), 'middleware', 'logger'));
 
 module.exports =
     function (passport, db) {

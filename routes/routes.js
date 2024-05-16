@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const path = require('path');
 const db = require(path.join(process.cwd(), 'config', 'db'));
 const crypto = require('crypto');
+const logger = require(path.join(process.cwd(), 'middleware', 'logger'));
 
 const check = require(path.join(process.cwd(), 'middleware', 'check'));
 const checkAuthenticated = check[0];
@@ -34,17 +35,17 @@ module.exports = function (passport) {
             res.status(400).send('Username and password are required');
             return;
         }
-        console.log('Registering user: ', username, password, firstname, lastname, is_parent, is_student, "with saltRounds: ", saltRounds);
+        winston.log('Registering user: ', username, password, firstname, lastname, is_parent, is_student, "with saltRounds: ", saltRounds);
         bcrypt.hash(password, saltRounds, (err, hashedPassword) => {
             if (err) {
-                console.error(err);
+                logger.error(`Error hashing password: ${err}`);
                 res.status(500).send('Server error');
             } else {
                 db.query('INSERT INTO users (username, firstname, lastname, password, is_parent, is_student) VALUES (?, ?, ?, ?, ?, ?)',
                     [username, firstname, lastname, hashedPassword, is_parent, is_student],
                     (err, results) => {
                         if (err) {
-                            console.error(err);
+                            logger.error(`Error inserting report into report table: ${err}`);
                             res.status(500).send('Server error');
                         } else {
                             res.redirect('/login');
@@ -56,7 +57,7 @@ module.exports = function (passport) {
     });
 
     router.get('/authenticated', checkAuthenticated, (req, res) => {
-        console.log('User successfully authenticated');
+        logger.info('User successfully authenticated');
         res.send("Welcome, authenticated user!<br><a href='/logout'>Logout</a><br><a href='/help'>Help</a><br><a href='/submit_incident'>Submit Incident</a><br><a href='/'>Home</a><br><a href='/view_reports'>View Reports</a>");
 
     });
@@ -83,7 +84,7 @@ module.exports = function (passport) {
         const is_victim = req.body.is_victim || 0;
         const report_Id = crypto.randomBytes(16).toString("hex");
 
-        console.log('Submitting incident: ', student_reporting, student_reported, incident_title, incident_description, incident_date, incident_location, is_annonomous, is_victim, report_Id);
+        logger.info('Submitting incident: ', student_reporting, student_reported, incident_title, incident_description, incident_date, incident_location, is_annonomous, is_victim, report_Id);
         //Make sure the data is not over the limit of characters
         if (incident_title.length > 100 || incident_description.length > 250 || incident_location.length > 100, student_reported.length > 5) {
             res.status(400).send('Data is too long.');
@@ -101,7 +102,7 @@ module.exports = function (passport) {
             [report_Id, incident_title, incident_description, incident_location, '1'],
             (err, results) => {
                 if (err) {
-                    console.error(err);
+                    logger.error(`Error inserting report into report table: ${err}`);
                     res.status(500).send('Server error sending report.');
                     return;
                 }
@@ -114,7 +115,7 @@ module.exports = function (passport) {
             [student_reported, report_Id, is_victim],
             (err, results) => {
                 if (err) {
-                    console.error(err);
+                    logger.error(`Error inserting report into reported_users table: ${err}`);
                     res.status(500).send('Server error assigning reported users.');
                     return;
                 }
@@ -126,23 +127,15 @@ module.exports = function (passport) {
                 [student_reporting, report_Id],
                 (err, results) => {
                     if (err) {
-                        console.error(err);
+                        logger.error(`Error inserting report into assigned_users table: ${err}`);
                         res.status(500).send('Server error assigning reporting users');
                         return;
                     }
                 });
         }
-
-
         //send the user to the help page
 
         res.redirect('/help');
-
-
-
-
-
-
     });
     router.get("/submit_incident", checkAuthenticated, (req, res) => {
         res.sendFile(path.join(process.cwd(), 'public', 'submit_incident.html'));
