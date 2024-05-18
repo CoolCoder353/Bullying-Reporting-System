@@ -40,16 +40,16 @@ morgan.format('custom', function (tokens, req, res) {
 // Set up Morgan
 app.use(morgan('custom', {
     skip: function (req, res) { return res.statusCode < 400 },
-    stream: { write: message => logger.error(message.trim()) }
+    stream: { write: message => logger.log("file", message.trim()) }
 }));
 
 app.use(morgan('custom', {
     skip: function (req, res) { return res.statusCode >= 400 },
-    stream: { write: message => logger.info(message.trim()) }
+    stream: { write: message => logger.log("file", message.trim()) }
 }));
 
 // Set up Morgan
-app.use(morgan('combined', { stream: { write: message => logger.info(message.trim()) } }));
+app.use(morgan('combined', { stream: { write: message => logger.log("file", message.trim()) } }));
 
 // Middleware for parsing request bodies
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -63,6 +63,9 @@ app.use(passport.session());
 
 // Set up dynamic file engine
 app.set('view engine', 'ejs');
+
+//Set the folder for the file engine
+app.set('views', path.join(__dirname, 'views'));
 
 // Routes
 app.use('/', routes);

@@ -8,7 +8,9 @@ const logger = require(path.join(process.cwd(), 'middleware', 'logger'));
 const check = require(path.join(process.cwd(), 'middleware', 'check'));
 const checkAuthenticated = check[0];
 const checkTeacher = check[1];
+
 const report_status = require(path.join(process.cwd(), 'config', 'config')).report_status;
+const report_manager = require(path.join(process.cwd(), 'middleware', 'report_manager'));
 
 module.exports = function (passport) {
     const saltRounds = require(path.join(process.cwd(), 'config', 'config')).saltRounds;
@@ -58,7 +60,7 @@ module.exports = function (passport) {
 
     router.get('/authenticated', checkAuthenticated, (req, res) => {
         logger.info('User successfully authenticated');
-        res.send("Welcome, authenticated user!<br><a href='/logout'>Logout</a><br><a href='/help'>Help</a><br><a href='/submit_incident'>Submit Incident</a><br><a href='/'>Home</a><br><a href='/view_reports'>View Reports</a>");
+        res.send("Welcome, authenticated user!<br><a href='/logout'>Logout</a><br><a href='/help'>Help</a><br><a href='/submit_incident'>Submit Incident</a><br><a href='/'>Home</a><br><a href='/view_reports'>View Reports</a><br><a href='/view_assigned_reports'>View Assigned Reports</a>");
 
     });
 
@@ -144,8 +146,59 @@ module.exports = function (passport) {
         res.sendFile(path.join(process.cwd(), 'public', 'help.html'));
     });
 
-    router.get("/view_reports", checkAuthenticated, checkTeacher, (req, res) => {
-        res.sendFile(path.join(process.cwd(), 'public', 'view_reports.html'));
+    router.get("/view_all_reports", checkAuthenticated, checkTeacher, (req, res) => {
+        logger.debug('Getting all reports');
+        report_manager.getReportsForStaff((err, reports) => {
+            if (err) {
+                logger.error(`Error getting reports for staff: ${err}`);
+                res.status(500).send('Server error getting reports.');
+                return;
+            }
+            logger.info(`Generating all reports (${reports.length})`);
+            res.render('view_reports', { reports: reports });
+        });
+    });
+
+    router.get("/view_assigned_reports", checkAuthenticated, (req, res) => {
+        const user_id = req.user?.user_id;
+        logger.debug('Getting assigned reports for user: ', user_id);
+        report_manager.getAssignedReports(user_id, (err, reports) => {
+            if (err) {
+                logger.error(`Error getting assigned reports for user: ${err}`);
+                res.status(500).send('Server error getting reports.');
+                return;
+            }
+            logger.info(`Generating assigned reports (${reports.length})`);
+            res.render('view_reports', { reports: reports });
+        });
+    });
+
+    router.get("/view_full_report", checkAuthenticated, (req, res) => {
+
+        const report_id = req.query.id;
+        let user_id = req.user?.user_id;
+
+        //If the user is a staff, they dont need to be assigned to see it.
+        if (!(req.user?.is_student) && !(req.user?.is_parent)) {
+            user_id = '';
+        }
+
+        logger.debug(`Getting full report for ${report_id} user: ${user_id}`);
+
+        report_manager.getFullReport(report_id, user_id, (err, report) => {
+            if (err) {
+                logger.error(`Error getting full report for ${report_id}: ${err}`);
+                res.status(500).send('Server error getting report.');
+                return;
+            }
+            if (report === null) {
+                logger.error(`No report found for ${report_id}`);
+                res.status(404).send('Report not found.');
+                return;
+            }
+            logger.info(`Generating full report for ${report_id}`);
+            res.render('view_full_report', { report: report });
+        });
     });
     return router;
 }

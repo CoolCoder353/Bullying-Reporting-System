@@ -10,5 +10,6 @@ const report_status = {
 
 
 module.exports = {
-    saltRounds
+    saltRounds,
+    report_status
 };

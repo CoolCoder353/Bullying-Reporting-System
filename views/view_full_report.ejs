@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Full Report</title>
+</head>
+
+<body>
+    <h1>View Full Report</h1>
+
+    <script data-report="<%= JSON.stringify(report) %>"">
+        var report = JSON.parse(document.currentScript.dataset.report);;
+        console.log(report);
+        document.append(document.createElement('p').textContent = report.title);
+    </script>
+</body>
+
+</html>

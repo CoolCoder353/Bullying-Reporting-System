@@ -1,7 +1,27 @@
 const winston = require('winston');
 
+
+const customLevels = {
+    levels: {
+        file: 0,
+        error: 1,
+        warn: 2,
+        info: 3,
+        debug: 4
+    },
+    colors: { //'black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white', 'gray', 'grey'.
+        file: 'magenta',
+        error: 'red',
+        warn: 'yellow',
+        info: 'green',
+        debug: 'blue'
+    }
+};
+
+winston.addColors(customLevels.colors);
+
 const logger = winston.createLogger({
-    level: 'info',
+    levels: customLevels.levels,
     format: winston.format.combine(
         winston.format.timestamp(),
         winston.format.json()
@@ -9,11 +29,16 @@ const logger = winston.createLogger({
     transports: [
         new winston.transports.Console({
             format: winston.format.combine(
-                winston.format.timestamp(),
                 winston.format.colorize(),
+                winston.format((info, opts) => {
+                    if (info.level === 'file') {
+                        return false;
+                    }
+                    return info;
+                })(),
+                winston.format.timestamp(),
                 winston.format.printf(({ level, message, timestamp }) => {
-                    const color = level === 'error' ? 'red' : level === 'warn' ? 'yellow' : 'white';
-                    return `\x1b[1m\x1b[${color}m${timestamp} [${level}]: ${message}\x1b[0m`.replace("hitem", "").replace("Z", "").replace("T", " ");
+                    return `${timestamp} [${level}]: ${message}`.replace("hitem", "").replace("Z", "").replace("T", " ");
                 })
             ),
             handleExceptions: true,
