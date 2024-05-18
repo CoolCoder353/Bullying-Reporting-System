@@ -67,6 +67,12 @@ app.set('view engine', 'ejs');
 //Set the folder for the file engine
 app.set('views', path.join(__dirname, 'views'));
 
+//Set errors from the file engine to go through the logger
+app.use((err, req, res, next) => {
+    logger.error(err);
+    next(err);
+});
+
 // Routes
 app.use('/', routes);
 
