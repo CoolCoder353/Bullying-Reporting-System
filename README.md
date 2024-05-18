@@ -34,6 +34,7 @@ All dependencies for this project are listed in the `package.json` file. Some of
 
 - bcrypt: For hashing passwords
 - body-parser: For parsing incoming request bodies
+- ejs: For handling dynamic webpages
 - express: For handling server routing
 - express-session: For managing user sessions
 - morgan: For logging request details
