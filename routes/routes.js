@@ -161,7 +161,7 @@ module.exports = function (passport) {
 
     router.get("/view_assigned_reports", checkAuthenticated, (req, res) => {
         const user_id = req.user?.user_id;
-        logger.debug('Getting assigned reports for user: ', user_id);
+        logger.info('Getting assigned reports for user: ', user_id);
         report_manager.getAssignedReports(user_id, (err, reports) => {
             if (err) {
                 logger.error(`Error getting assigned reports for user: ${err}`);
@@ -185,7 +185,7 @@ module.exports = function (passport) {
 
         logger.debug(`Getting full report for ${report_id} user: ${user_id}`);
 
-        report_manager.getFullReport(report_id, user_id, (err, report) => {
+        report_manager.getFullReport(report_id, user_id, true, (err, report) => {
             if (err) {
                 logger.error(`Error getting full report for ${report_id}: ${err}`);
                 res.status(500).send('Server error getting report.');
@@ -199,6 +199,90 @@ module.exports = function (passport) {
             logger.info(`Generating full report for ${report_id}`);
             res.render('view_full_report', { report: report });
         });
+
     });
+    router.get("/report_messages", checkAuthenticated, (req, res) => {
+        const report_id = req.query.id;
+        let user_id = req.user?.user_id;
+
+        logger.debug(`Getting messages for report: ${report_id}`);
+        //If the user is a staff, they dont need to be assigned to see it.
+        if (!(req.user?.is_student) && !(req.user?.is_parent)) {
+            user_id = '';
+        }
+
+        logger.debug(`Getting messages for report: ${report_id}`);
+        report_manager.getMessages(report_id, user_id, (err, messages) => {
+            if (err) {
+                logger.error(`Error getting messages for report: ${report_id}: ${err}`);
+                res.status(500).send('Server error getting messages.');
+                return;
+            }
+            if (messages === null) {
+                logger.error(`No messages found for report: ${report_id}`);
+                res.status(404).send('Messages not found.');
+                return;
+            }
+            logger.info(`Generating '${messages.length}' messages for report: ${report_id}`);
+            res.render('report_messages', { messages: messages });
+        });
+    });
+
+    router.post("/report_messages", checkAuthenticated, (req, res) => {
+        const report_id = req.body.id;
+        let user_id = req.user?.user_id;
+
+        //If the user is a staff, they dont need to be assigned to see it.
+        if (!(req.user?.is_student) && !(req.user?.is_parent)) {
+            user_id = '';
+        }
+
+        logger.debug(`Getting messages for report: ${report_id}`);
+        report_manager.getMessages(report_id, user_id, (err, messages) => {
+            if (err) {
+                logger.error(`Error getting messages for report: ${report_id}: ${err}`);
+                res.status(500).send('Server error getting messages.');
+                return;
+            }
+            if (messages === null) {
+                logger.error(`No messages found for report: ${report_id}`);
+                res.status(404).send('Messages not found.');
+                return;
+            }
+            logger.debug(`Generating '${messages.length}' messages for report: ${report_id}`);
+            res.status(200).send(messages);
+        });
+    });
+    router.post("/send_message", checkAuthenticated, (req, res) => {
+        const report_id = req.body.id;
+        const user_id = req.user?.user_id;
+        const message = req.body.message;
+
+        if (message === '') {
+            res.status(400).send('Message is required');
+            return;
+        }
+        if (user_id === undefined || user_id === '') {
+            res.status(400).send('User is not logged in');
+            return;
+        }
+        if (report_id === undefined || report_id === '') {
+            res.status(400).send('Report is not defined');
+            return;
+        }
+        logger.warn(`Sending message for report: ${report_id} from user: ${user_id}`);
+        report_manager.sendMessage(report_id, user_id, message, (err) => {
+            if (err) {
+                logger.error(`Error sending message for report: ${report_id}: ${err}`);
+                res.status(500).send(`Server error sending message. ${err}`);
+                return;
+            }
+            logger.info(`Message sent for report: ${report_id}`);
+            res.sendStatus(200);
+        });
+    });
+
+
+
     return router;
 }

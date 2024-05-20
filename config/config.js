@@ -8,8 +8,11 @@ const report_status = {
 
 }
 
+const logDebug = false;
+
 
 module.exports = {
     saltRounds,
-    report_status
+    report_status,
+    logDebug
 };

@@ -1,9 +1,10 @@
 const winston = require('winston');
-
+const path = require('path');
+const config = require(path.join(process.cwd(), 'config', 'config'));
 
 const customLevels = {
     levels: {
-        file: 0,
+        file: 99,
         error: 1,
         warn: 2,
         info: 3,
@@ -18,6 +19,15 @@ const customLevels = {
     }
 };
 
+consoleLevels = ['error', 'warn', 'info'];
+
+consoleLevel = 'info';
+if (config.logDebug) {
+    consoleLevels.push('debug');
+    consoleLevel = 'debug';
+}
+
+
 winston.addColors(customLevels.colors);
 
 const logger = winston.createLogger({
@@ -31,7 +41,7 @@ const logger = winston.createLogger({
             format: winston.format.combine(
                 winston.format.colorize(),
                 winston.format((info, opts) => {
-                    if (info.level === 'file') {
+                    if (info.level === 0) { //file level
                         return false;
                     }
                     return info;
@@ -46,7 +56,8 @@ const logger = winston.createLogger({
             prettyPrint: true,
             colorize: true,
             timestamp: true,
-            stderrLevels: ['error', 'warn']
+            stderrLevels: consoleLevels,
+            level: consoleLevel
         }),
         new winston.transports.File({ filename: 'logs/error.log', level: 'error', format: winston.format.json() }),
         new winston.transports.File({ filename: 'logs/combined.log', format: winston.format.json() })

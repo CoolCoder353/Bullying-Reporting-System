@@ -22,7 +22,10 @@
         <% reports.forEach(function(report) { %>
             <tr>
                 <td>
-                    <%= report.id %>
+                    <a href="view_full_report?id=<%= report.report_id %>">
+                        <%= report.report_id %>
+                    </a>
+
                 </td>
                 <td>
                     <%= report.title %>
