@@ -62,7 +62,7 @@ module.exports = {
     getFullReport: function (report_id, user_id = '', include_messages = true, callback) {
         logger.debug(`Getting full report for ${report_id} user: ${user_id}`);
 
-        db.query('SELECT report.*, reported_users.* FROM `report` join reported_users WHERE reported_users.report_id = report.report_id ', [report_id], (err, results) => {
+        db.query('SELECT report.*, reported_users.* FROM `report` join reported_users WHERE reported_users.report_id = report.report_id AND report.report_id = ? ', [report_id], (err, results) => {
             if (err) {
                 logger.error(`Error getting report ${report_id}: ${err}`);
                 callback(err, null);

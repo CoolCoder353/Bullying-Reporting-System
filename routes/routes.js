@@ -99,23 +99,22 @@ module.exports = function (passport) {
     });
     router.post('/submit_incident', checkAuthenticated, (req, res) => {
         const student_reporting = req.user?.user_id;//get student id from session
-        const student_reported = req.body.student_reported;
-        const incident_title = req.body.incident_title;
-        const incident_description = req.body.incident_description;
-        const incident_date = req.body.incident_date;
-        const incident_location = req.body.incident_location;
+        const student_reported_firstname = req.body.student_reported_firstname;
+        const student_reported_lastname = req.body.student_reported_lastname;
+        const incident_title = req.body.title;
+        const incident_description = req.body.description;
+        const incident_date = req.body.date;
+        const incident_location = req.body.location;
         const is_annonomous = req.body.is_annonomous || 0;
-        const is_victim = req.body.is_victim || 0;
         const report_Id = crypto.randomBytes(16).toString("hex");
 
-        logger.info('Submitting incident: ', student_reporting, student_reported, incident_title, incident_description, incident_date, incident_location, is_annonomous, is_victim, report_Id);
         //Make sure the data is not over the limit of characters
-        if (incident_title.length > 100 || incident_description.length > 250 || incident_location.length > 100, student_reported.length > 5) {
+        if (incident_title.length > 100 || incident_description.length > 250 || incident_location.length > 100 || student_reported_firstname.length > 120 || student_reported_lastname.length > 120) {
             res.status(400).send('Data is too long.');
             return;
         }
 
-        if (student_reported === '' || incident_title === '' || incident_description === '' || incident_date === '' || incident_location === '') {
+        if (student_reported_firstname === '' || student_reported_lastname === "" || incident_title === '' || incident_description === '' || incident_date === '' || incident_location === '') {
             res.status(400).send('All fields are required.');
             return;
         }
@@ -123,7 +122,7 @@ module.exports = function (passport) {
 
         //append the data to the reports table in the database
         db.query('INSERT INTO `report`(`report_id`,`title`, `description`, `location`, `status`) VALUES (?,?,?,?,?)',
-            [report_Id, incident_title, incident_description, incident_location, '1'],
+            [report_Id, incident_title, incident_description, incident_location, report_status.PENDING],
             (err, results) => {
                 if (err) {
                     logger.error(`Error inserting report into report table: ${err}`);
@@ -135,8 +134,8 @@ module.exports = function (passport) {
 
 
         //Add the reported users to the reported_users table in the database
-        db.query('INSERT INTO `reported_users`(`user_id`, `report_id`, `is_victim`) VALUES (?,?,?)',
-            [student_reported, report_Id, is_victim],
+        db.query('INSERT INTO `reported_users`(`report_id`, `firstname`, `lastname`) VALUES (?,?,?)',
+            [report_Id, student_reported_firstname, student_reported_lastname],
             (err, results) => {
                 if (err) {
                     logger.error(`Error inserting report into reported_users table: ${err}`);
