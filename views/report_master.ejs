@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html data-bs-theme="light" lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <title>Bootstrap template</title>
+    <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,700,300italic,400italic,700italic&amp;display=swap">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i&amp;display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nunito&amp;display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nunito+Sans&amp;display=swap">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.0/css/all.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="assets/fonts/fontawesome5-overrides.min.css">
+    <link rel="stylesheet" href="assets/css/styles.min.css">
+</head>
+
+<body style="background: #fffff0;">
+    <%- include('partials/nav') %>
+        <% if ((assigned_reports) && assigned_reports.length> 0) { %>
+            <h1 class="text-center">Your Reports</h1>
+            <div class="col-md-12 search-table-col" style="margin-top: 28px;background: #fdf5e6;">
+                <div class="form-group pull-right col-lg-4"><input type="text" class="search form-control"
+                        placeholder="Search by typing here.." style="background: #f5f5dc;"></div><span
+                    class="counter pull-right"></span>
+                <div class="table-responsive table table-hover table-bordered results" style="background: #f5f5dc;">
+                    <table class="table table-hover table-bordered">
+                        <thead class="bill-header cs" style="border-color: #fdf5e6;background: rgba(37,71,106,0);">
+                            <tr style="border-color: rgb(255,255,255);">
+                                <th id="trs-hd-1" class="col-lg-1" style="background: #f5f5dc;">Report_ID</th>
+                                <th id="trs-hd-2" class="col-lg-2" style="background: #f5f5dc;">Reported</th>
+                                <th id="trs-hd-3" class="col-lg-3" style="background: #f5f5dc;">Title</th>
+                                <th id="trs-hd-4" class="col-lg-2" style="background: #f5f5dc;">Status</th>
+                                <th id="trs-hd-5" class="col-lg-2" style="background: #f5f5dc;border-color: #fffff0;">
+                                    Date
+                                    and
+                                    Time</th>
+                                <th id="trs-hd-6" class="col-lg-2" style="background: #f5f5dc;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="warning no-result">
+                                <td colspan="12"><i class="fa fa-warning"></i>&nbsp; No Result !!!</td>
+                            </tr>
+
+
+                            <% assigned_reports.forEach(function(report) { %>
+                                <tr>
+                                    <td>
+                                        <%= report.report_id %>
+                                    </td>
+                                    <td>
+                                        <%= report.lastname %>, <%= report.firstname %>
+                                    </td>
+                                    <td>
+                                        <%= report.title %>
+                                    </td>
+                                    <td>
+                                        <%= report.status %>
+                                    </td>
+                                    <td>
+                                        <%= report.time_since %>
+                                    </td>
+                                    <td><a href="view_full_report?id=<%= report.report_id %>" class="btn btn-success"
+                                            style="margin-left: 5px;background: #daa520;" type="submit"><svg
+                                                xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="1em"
+                                                height="1em" fill="currentColor" style="font-size: 15px;">
+                                                <!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc. -->
+                                                <path
+                                                    d="M344 0H488c13.3 0 24 10.7 24 24V168c0 9.7-5.8 18.5-14.8 22.2s-19.3 1.7-26.2-5.2l-39-39-87 87c-9.4 9.4-24.6 9.4-33.9 0l-32-32c-9.4-9.4-9.4-24.6 0-33.9l87-87L327 41c-6.9-6.9-8.9-17.2-5.2-26.2S334.3 0 344 0zM168 512H24c-13.3 0-24-10.7-24-24V344c0-9.7 5.8-18.5 14.8-22.2s19.3-1.7 26.2 5.2l39 39 87-87c9.4-9.4 24.6-9.4 33.9 0l32 32c9.4 9.4 9.4 24.6 0 33.9l-87 87 39 39c6.9 6.9 8.9 17.2 5.2 26.2s-12.5 14.8-22.2 14.8z">
+                                                </path>
+                                            </svg></a><a class="btn btn-danger" style="margin-left: 5px;"
+                                            type="submit"><i class="fa fa-trash" style="font-size: 15px;"></i></a></td>
+                                </tr>
+
+                                <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <% } else { %>
+                <h1 class="text-center">No reports assigned to you</h1>
+                <% } %>
+                    <% if (!(all_reports) || all_reports.length !=0) { %>
+                        <h1 class="text-center">All Reports</h1>
+                        <div class="col-md-12 search-table-col" style="margin-top: 28px;background: #fdf5e6;">
+                            <div class="form-group pull-right col-lg-4"><input type="text" class="search form-control"
+                                    placeholder="Search by typing here.." style="background: #f5f5dc;"></div><span
+                                class="counter pull-right"></span>
+                            <div class="table-responsive table table-hover table-bordered results"
+                                style="background: #f5f5dc;">
+                                <table class="table table-hover table-bordered">
+                                    <thead class="bill-header cs" style="border-color: #fdf5e6;">
+                                        <tr>
+                                            <th id="trs-hd-7" class="col-lg-1" style="background: #f5f5dc;">
+                                                Report_ID
+                                            </th>
+                                            <th id="trs-hd-8" class="col-lg-2" style="background: #f5f5dc;">Reported
+                                            </th>
+                                            <th id="trs-hd-9" class="col-lg-3" style="background: #f5f5dc;">Title
+                                            </th>
+                                            <th id="trs-hd-10" class="col-lg-2" style="background: #f5f5dc;">Status
+                                            </th>
+                                            <th id="trs-hd-11" class="col-lg-2" style="background: #f5f5dc;">Date
+                                                and
+                                                Time
+                                            </th>
+                                            <th id="trs-hd-12" class="col-lg-2" style="background: #f5f5dc;">Action
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="warning no-result">
+                                            <td colspan="12"><i class="fa fa-warning"></i>&nbsp; No Result !!!</td>
+                                        </tr>
+                                        <% all_reports.forEach(function(report) { %>
+                                            <tr>
+                                                <td>
+                                                    <%= report.report_id %>
+                                                </td>
+                                                <td>
+                                                    <%= report.lastname %>, <%= report.firstname %>
+                                                </td>
+                                                <td>
+                                                    <%= report.title %>
+                                                </td>
+                                                <td>
+                                                    <%= report.status %>
+                                                </td>
+                                                <td>
+                                                    <%= report.datetime %>
+                                                </td>
+                                                <td><a href="view_full_report?id=<%= report.report_id %>"
+                                                        class="btn btn-success"
+                                                        style="margin-left: 5px;background: #daa520;" type="submit"><svg
+                                                            xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"
+                                                            width="1em" height="1em" fill="currentColor"
+                                                            style="font-size: 15px;">
+                                                            <!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc. -->
+                                                            <path
+                                                                d="M344 0H488c13.3 0 24 10.7 24 24V168c0 9.7-5.8 18.5-14.8 22.2s-19.3 1.7-26.2-5.2l-39-39-87 87c-9.4 9.4-24.6 9.4-33.9 0l-32-32c-9.4-9.4-9.4-24.6 0-33.9l87-87L327 41c-6.9-6.9-8.9-17.2-5.2-26.2S334.3 0 344 0zM168 512H24c-13.3 0-24-10.7-24-24V344c0-9.7 5.8-18.5 14.8-22.2s19.3-1.7 26.2 5.2l39 39 87-87c9.4-9.4 24.6-9.4 33.9 0l32 32c9.4 9.4 9.4 24.6 0 33.9l-87 87 39 39c6.9 6.9 8.9 17.2 5.2 26.2s-12.5 14.8-22.2 14.8z">
+                                                            </path>
+                                                        </svg></a><a class="btn btn-danger" style="margin-left: 5px;"
+                                                        type="submit"><i class="fa fa-trash"
+                                                            style="font-size: 15px;"></i></a>
+                                                </td>
+                                            </tr>
+
+                                            <% }); %>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <% } %>
+
+
+                            <script
+                                src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+                            <script src="assets/js/script.min.js"></script>
+</body>
+
+</html>

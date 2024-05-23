@@ -19,7 +19,7 @@ function IsIn(element, list) {
 module.exports = {
 
     getAssignedReports: function (user_id, callback) {
-        db.query('SELECT * FROM `report` WHERE NOT(`status` = ?) AND `report_id` IN (SELECT `report_id` FROM `assigned_users` WHERE `user_id` = ?) ORDER BY datetime', [report_status.SOLVED, user_id], (err, results) => {
+        db.query('SELECT report.*, reported_users.* FROM `report` join reported_users WHERE reported_users.report_id = report.report_id AND NOT(report.`status` = ?) AND report.`report_id` IN (SELECT `report_id` FROM `assigned_users` WHERE `user_id` = ?) ORDER BY datetime;', [report_status.SOLVED, user_id], (err, results) => {
             if (err) {
                 logger.error(`Error getting assigned reports for ${user_id}: ${err}`);
                 callback(err, null);
@@ -45,7 +45,7 @@ module.exports = {
     getFullReport: function (report_id, user_id = '', include_messages = true, callback) {
         logger.debug(`Getting full report for ${report_id} user: ${user_id}`);
 
-        db.query('SELECT * FROM `report` WHERE `report_id` = ?', [report_id], (err, results) => {
+        db.query('SELECT report.*, reported_users.* FROM `report` join reported_users WHERE reported_users.report_id = report.report_id ', [report_id], (err, results) => {
             if (err) {
                 logger.error(`Error getting report ${report_id}: ${err}`);
                 callback(err, null);
@@ -65,62 +65,56 @@ module.exports = {
 
             const report = results[0];
 
-            db.query('SELECT `user_id`, `is_victim` FROM `reported_users` WHERE `report_id` = ?', [report_id], (err, results) => {
+            //Update the status from a number to text
+            report.status = Object.keys(report_status).find(key => report_status[key] === report.status);
+
+            db.query('SELECT assigned_users.`user_id`, assigned_users.`datetime`, users.* FROM `assigned_users` join users WHERE `report_id` = ? AND assigned_users.user_id = users.user_ID ORDER BY datetime', [report_id], (err, results) => {
                 if (err) {
-                    logger.error(`Error getting reported users for ${report_id}: ${err}`);
+                    logger.error(`Error getting assigned users for ${report_id}: ${err}`);
                     callback(err, null);
                     return;
                 }
 
-                report.reported_users = results;
+                report.assigned_users = results;
 
-                db.query('SELECT `user_id`, `datetime` FROM `assigned_users` WHERE `report_id` = ?', [report_id], (err, results) => {
-                    if (err) {
-                        logger.error(`Error getting assigned users for ${report_id}: ${err}`);
-                        callback(err, null);
+
+                if (user_id !== '') {
+                    if (!IsIn(user_id, results)) {
+                        logger.error(`User ${user_id} is not assigned to report ${report_id}`);
+                        callback(null, null);
                         return;
                     }
+                }
 
-                    report.assigned_users = results;
-
-
-                    if (user_id !== '') {
-                        if (!IsIn(user_id, results)) {
-                            logger.error(`User ${user_id} is not assigned to report ${report_id}`);
-                            callback(null, null);
+                if (include_messages) {
+                    this.getMessages(report_id, user_id, (err, results) => {
+                        if (err) {
+                            logger.error(`Error getting messages for ${report_id}: ${err}`);
+                            callback(err, null);
                             return;
                         }
-                    }
+                        if (results.length === 0) {
+                            logger.warn(`No messages found for ${report_id}, excluding from report`);
+                        }
+                        else {
+                            report.messages = results;
+                        }
 
-                    if (include_messages) {
-                        this.getMessages(report_id, user_id, (err, results) => {
-                            if (err) {
-                                logger.error(`Error getting messages for ${report_id}: ${err}`);
-                                callback(err, null);
-                                return;
-                            }
-                            if (results.length === 0) {
-                                logger.warn(`No messages found for ${report_id}, excluding from report`);
-                            }
-                            else {
-                                report.messages = results;
-                            }
-
-                        });
-                    }
-                    //If something went wrong, this will no longer be a function
-                    //NOTE: The return statments are doing nothing, need to refactor this code.
-                    if (callback != undefined) {
-                        logger.debug(`Sent report ${report_id} to callback`);
-                        callback(null, report);
-                    }
-                    else {
-                        logger.warn(`Callback undefined after getting report ${report_id}`);
-                    }
-
-                });
+                    });
+                }
+                //If something went wrong, this will no longer be a function
+                //NOTE: The return statments are doing nothing, need to refactor this code.
+                if (callback != undefined) {
+                    logger.debug(`Sent report ${report_id} to callback`);
+                    callback(null, report);
+                }
+                else {
+                    logger.warn(`Callback undefined after getting report ${report_id}`);
+                }
 
             });
+
+
         });
     },
 

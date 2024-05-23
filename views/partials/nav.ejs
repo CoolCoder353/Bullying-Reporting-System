@@ -1,0 +1,22 @@
+<nav class="navbar navbar-expand-md bg-warning-subtle bg-opacity-75" style="color: var(--bs-navbar-active-color);">
+    <div class="container-fluid"><a class="navbar-brand" href="/">Buddy</a><button data-bs-toggle="collapse"
+            class="navbar-toggler" data-bs-target="#navcol-1"><span class="visually-hidden">Toggle
+                navigation</span><span class="navbar-toggler-icon"></span></button>
+        <div class="collapse navbar-collapse" id="navcol-1">
+            <ul class="navbar-nav">
+                <li class="nav-item"><a class="nav-link active" href="submit_incident">Submit Incident</a></li>
+                <li class="nav-item"></li>
+                <li class="nav-item"><a class="nav-link" href="help">Get Help</a></li>
+            </ul>
+            <% if (user){ %>
+                <ul class="navbar-nav ms-auto">
+                    <a class="" href="view_assigned_reports" style="padding-right: 25px;">Reports</a>
+                    <a class="" href="authenticated" style="padding-right: 25px;">Account</a>
+                    <a class="" href="logout" style="padding-right: 25px;">Logout</a>
+                </ul>
+                <% } else { %>
+                    <a class="ms-auto" href="login" style="padding-right: 25px;">Login</a>
+                    <% } %>
+        </div>
+    </div>
+</nav>

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html data-bs-theme="light" lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <title>Bootstrap template</title>
+    <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,700,300italic,400italic,700italic&amp;display=swap">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i&amp;display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nunito&amp;display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nunito+Sans&amp;display=swap">
+    <link rel="stylesheet" href="assets/css/styles.min.css">
+</head>
+
+<body style="background: #fffff0;">
+    <%- include('partials/nav') %>
+        <div class="container mt-5" style="padding-bottom: 45px;">
+            <div class="col" style="color: #858796;margin: 16px;margin-left: 0px;"><a style="text-decoration: none;"
+                    href="view_assigned_reports"><span class="fs-5 mt-5 mb-5"
+                        style="margin-bottom: 20px;color: rgb(133,135,150);"><svg xmlns="http://www.w3.org/2000/svg"
+                            width="1em" height="1em" viewBox="0 0 24 24" fill="none">
+                            <path
+                                d="M1.02698 11.9929L5.26242 16.2426L6.67902 14.8308L4.85766 13.0033L22.9731 13.0012L22.9728 11.0012L4.85309 11.0033L6.6886 9.17398L5.27677 7.75739L1.02698 11.9929Z"
+                                fill="currentColor"></path>
+                        </svg>
+                        <%=report.report_id %>
+                    </span></a></div>
+            <div>
+                <h2 class="fw-normal text-center mb-3" style="color: #858796;">
+                    <%= report.title %>
+                </h2>
+            </div>
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-12 col-sm-6 col-md-4 col-lg-3" style="margin-top: 12px;"><label
+                                class="form-label fs-6 fw-bold">Reported ID:</label>
+                            <h5 class="fs-6">
+                                <%= report.reported_users_id %>
+                            </h5>
+                        </div>
+                        <div class="col-12 col-sm-6 col-md-4 col-lg-3" style="margin-top: 12px;"><label
+                                class="form-label fs-6 fw-bold">Reported Name</label>
+                            <h5 class="fs-6">
+                                <%= report.firstname %>, <%= report.lastname %>
+                            </h5>
+                        </div>
+                        <div class="col-12 col-sm-6 col-md-4 col-lg-3" style="margin-top: 12px;"><label
+                                class="form-label fs-6 fw-bold">Reported Amount (term)</label>
+                            <h5 class="fs-6">99999999</h5>
+                        </div>
+                        <div class="col-12 col-sm-6 col-md-4 col-lg-3" style="margin-top: 12px;"><label
+                                class="form-label fs-6 fw-bold">Reported Amount (total)</label>
+                            <h5 class="fs-6">09432432112321</h5>
+                        </div>
+                        <div class="col-12 col-sm-6 col-md-4 col-lg-3" style="margin-top: 12px;"><label
+                                class="form-label fs-6 fw-bold">From ID</label>
+                            <h5 class="fs-6">
+                                <%= report.assigned_users[0].user_id %>
+                            </h5>
+                        </div>
+                        <div class="col-12 col-sm-6 col-md-4 col-lg-3" style="margin-top: 12px;"><label
+                                class="form-label fs-6 fw-bold">From Name</label>
+                            <h5 class="fs-6">
+                                <%= report.assigned_users[0].lastname %>, <%= report.assigned_users[0].firstname %>
+                            </h5>
+                        </div>
+                        <div class="col-12 col-sm-6 col-md-4 col-lg-3" style="margin-top: 12px;"><label
+                                class="form-label fs-6 fw-bold">Time Since Submitted</label>
+                            <h5 class="fs-6">50 years</h5>
+                        </div>
+                        <div class="col-12 col-sm-6 col-md-4 col-lg-3" style="margin-top: 12px;"><label
+                                class="form-label fs-6 fw-bold">Status</label>
+                            <h5 class="fs-6">
+                                <%= report.status %>
+                            </h5>
+                        </div>
+                        <div class="col-12 col-sm-12 col-md-12 col-lg-12" style="margin-top: 12px;"><label
+                                class="form-label fs-6 fw-bold">Description</label>
+                            <h5 class="fs-6">
+                                <%= report.description %>
+                            </h5>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-12 col-sm-6 col-md-4" style="margin-top: 12px;"><label
+                                class="form-label fs-6 fw-bold">Assigned Staff:</label>
+                            <% if(report.assigned_users.length> 1) { %>
+                                <h5 class="fs-6">
+                                    <%= report.assigned_users[1].lastname %>, <%= report.assigned_users[1].firstname %>
+                                </h5>
+                        </div>
+                        <div class="col-12 col-sm-6 col-md-4" style="margin-top: 12px;"><label
+                                class="form-label fs-6 fw-bold">Since:</label>
+                            <h5 class="fs-6">500 years ago</h5>
+                        </div>
+                        <% } else {%>
+                            <h5 class="fs-6">No one is assigned</h5>
+                            <a href="assign_report?id=<%= report.report_id %>" class="btn btn-primary"
+                                style="background: #daa520;">Assign
+                                Yourself</a>
+                            <% } %>
+                    </div>
+                    <hr class="mb-0 pb-0">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Discussion&nbsp;</h3>
+                        </div>
+                        <div class="card-body" style="min-height:233px;">
+
+                            <ul id="message_parent" class="list-group">
+
+
+                            </ul>
+
+                            <div id="report_id" hidden data-id="<%= report.report_id %>"></div>
+                            <input type="text" name="message" id="message" placeholder="Leave a Comment"
+                                class="form-text form-control">
+                            <button id="send_message" class="btn btn-light" style="background: #daa520;"
+                                type="button">Add
+                                Comment</button>
+
+                        </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </div>
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="assets/js/script.min.js"></script>
+
+        <script src="js/send_message.js"></script>
+</body>
+
+</html>

@@ -32,6 +32,8 @@ $(document).ready(function () {
         }
     });
 
+    var messages_displayed = [];
+
     // Display chat
     function displayChat() {
         var report_id = $('#report_id').data("id");
@@ -45,7 +47,39 @@ $(document).ready(function () {
                 console.log(`Success`);
                 console.log(response);
 
-                $('#chat').html(response);
+                if (messages_displayed.length != response.length) {
+                    response.forEach(function (message) {
+                        if (!messages_displayed.includes(message.message_id)) {
+                            messages_displayed.push(message.message_id);
+                            var message = `
+                            <li class="list-group-item" style="margin-bottom:6px;">
+                            <div class="d-flex media">
+                                <div class="media-body">
+                                    <div class="d-flex media" style="overflow:visible;">
+                                        <div  style="overflow:visible;" class="media-body">
+
+                                  <div class="row">
+                            <div class="col-md-12">
+                                <p><a href="#">
+                                        ${message.lastname},${message.firstname}
+                                    </a><br>
+                                    ${message.message}<br>
+                                        <small class="text-muted">
+                                            ${message.datetime}
+                                        </small>
+                                </p>
+                            </div>      </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </li>`;
+                            $('#message_parent').append(message);
+                        }
+                    });
+                }
+
+
             },
             error: function (response) {
                 console.log(`Error`);

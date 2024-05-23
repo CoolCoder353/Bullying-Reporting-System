@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const path = require('path');
 const db = require(path.join(process.cwd(), 'config', 'db'));
 const crypto = require('crypto');
+const { error } = require('console');
 const logger = require(path.join(process.cwd(), 'middleware', 'logger'));
 
 const check = require(path.join(process.cwd(), 'middleware', 'check'));
@@ -16,7 +17,27 @@ module.exports = function (passport) {
     const saltRounds = require(path.join(process.cwd(), 'config', 'config')).saltRounds;
     const router = express.Router();
 
-    router.post('/login', passport.authenticate('local', { failureRedirect: '/login', successRedirect: '/authenticated' }));
+    router.post('/login', function (req, res, next) {
+        passport.authenticate('local', function (err, user, info) {
+            logger.info(`Authenticating user: ${req.body.username} with password: ${req.body.password}, user: ${user}, info: ${info}, err: ${err}`);
+            if (err) {
+                logger.error(`Error authenticating user: ${err}`);
+                return next(err);
+            }
+            if (!user) {
+                req.session.login_error = "Incorrect username or password.";
+                logger.info(`User '${req.body.username}' failed to login: "Incorrect username or password."`);
+                return res.redirect('/login');
+            }
+            req.logIn(user, function (err) {
+                if (err) {
+                    logger.error(`Error logging in user: ${err}`);
+                    return next(err);
+                }
+                return res.redirect('/authenticated');
+            });
+        })(req, res, next);
+    });
 
     router.get('/logout', (req, res) => {
         req.logout(function (err) {
@@ -65,7 +86,7 @@ module.exports = function (passport) {
     });
 
     router.get('/login', (req, res) => {
-        res.sendFile(path.join(process.cwd(), 'public', 'login.html'));
+        res.render('login', { error: req.session.login_error, user: req.user });
     });
 
     router.get('/register', (req, res) => {
@@ -73,7 +94,7 @@ module.exports = function (passport) {
     });
 
     router.get('/', (req, res) => {
-        res.sendFile(path.join(process.cwd(), 'public', 'index.html'));
+        res.render("index", { user: req.user });
     });
     router.post('/submit_incident', checkAuthenticated, (req, res) => {
         const student_reporting = req.user?.user_id;//get student id from session
@@ -140,28 +161,23 @@ module.exports = function (passport) {
         res.redirect('/help');
     });
     router.get("/submit_incident", checkAuthenticated, (req, res) => {
-        res.sendFile(path.join(process.cwd(), 'public', 'submit_incident.html'));
+        res.render("submit", { error: req.session.submit_error, user: req.user });
     });
     router.get("/help", (req, res) => {
-        res.sendFile(path.join(process.cwd(), 'public', 'help.html'));
+        res.render("help", { user: req.user });
     });
 
     router.get("/view_all_reports", checkAuthenticated, checkTeacher, (req, res) => {
         logger.debug('Getting all reports');
-        report_manager.getReportsForStaff((err, reports) => {
-            if (err) {
-                logger.error(`Error getting reports for staff: ${err}`);
-                res.status(500).send('Server error getting reports.');
-                return;
-            }
-            logger.info(`Generating all reports (${reports.length})`);
-            res.render('view_reports', { reports: reports });
-        });
+
     });
 
     router.get("/view_assigned_reports", checkAuthenticated, (req, res) => {
         const user_id = req.user?.user_id;
         logger.info('Getting assigned reports for user: ', user_id);
+
+        var var_assigned_reports = [];
+        var var_all_reports = [];
         report_manager.getAssignedReports(user_id, (err, reports) => {
             if (err) {
                 logger.error(`Error getting assigned reports for user: ${err}`);
@@ -169,7 +185,27 @@ module.exports = function (passport) {
                 return;
             }
             logger.info(`Generating assigned reports (${reports.length})`);
-            res.render('view_reports', { reports: reports });
+            var_assigned_reports = reports;
+
+            if (!(req.user.is_student) && !(req.user.is_parent)) {
+                report_manager.getReportsForStaff((err, reports) => {
+                    if (err) {
+                        logger.error(`Error getting reports for staff: ${err}`);
+                        res.status(500).send('Server error getting reports.');
+                        return;
+                    }
+                    logger.info(`Generating all reports (${reports.length})`);
+                    var_all_reports = reports;
+
+                    logger.info(`Rendering report_master with ${var_assigned_reports.length} assigned reports`);
+                    logger.info(`Rendering report_master with ${var_all_reports.length} all reports`);
+                    res.render('report_master', { assigned_reports: var_assigned_reports, all_reports: var_all_reports, user: req.user });
+                });
+            }
+            else {
+                logger.info(`Rendering report_master with ${var_assigned_reports.length} assigned reports`);
+                res.render('report_master', { assigned_reports: var_assigned_reports, all_reports: var_all_reports, user: req.user });
+            }
         });
     });
 
@@ -197,36 +233,11 @@ module.exports = function (passport) {
                 return;
             }
             logger.info(`Generating full report for ${report_id}`);
-            res.render('view_full_report', { report: report });
+            res.render('report_details', { report: report, user: req.user });
         });
 
     });
-    router.get("/report_messages", checkAuthenticated, (req, res) => {
-        const report_id = req.query.id;
-        let user_id = req.user?.user_id;
 
-        logger.debug(`Getting messages for report: ${report_id}`);
-        //If the user is a staff, they dont need to be assigned to see it.
-        if (!(req.user?.is_student) && !(req.user?.is_parent)) {
-            user_id = '';
-        }
-
-        logger.debug(`Getting messages for report: ${report_id}`);
-        report_manager.getMessages(report_id, user_id, (err, messages) => {
-            if (err) {
-                logger.error(`Error getting messages for report: ${report_id}: ${err}`);
-                res.status(500).send('Server error getting messages.');
-                return;
-            }
-            if (messages === null) {
-                logger.error(`No messages found for report: ${report_id}`);
-                res.status(404).send('Messages not found.');
-                return;
-            }
-            logger.info(`Generating '${messages.length}' messages for report: ${report_id}`);
-            res.render('report_messages', { messages: messages });
-        });
-    });
 
     router.post("/report_messages", checkAuthenticated, (req, res) => {
         const report_id = req.body.id;
