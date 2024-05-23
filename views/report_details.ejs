@@ -77,6 +77,10 @@
                             <h5 class="fs-6">
                                 <%= report.status %>
                             </h5>
+                            <a href="update_status?id=<%= report.report_id %>, status=<%=status_code.code %>"
+                                class="btn btn-primary" stlye="background: #daa520;">
+                                <%= status_code.status %>
+                            </a>
                         </div>
                         <div class="col-12 col-sm-12 col-md-12 col-lg-12" style="margin-top: 12px;"><label
                                 class="form-label fs-6 fw-bold">Description</label>
@@ -100,10 +104,12 @@
                         </div>
                         <% } else {%>
                             <h5 class="fs-6">No one is assigned</h5>
-                            <a href="assign_report?id=<%= report.report_id %>" class="btn btn-primary"
-                                style="background: #daa520;">Assign
-                                Yourself</a>
-                            <% } %>
+                            <% if(user.is_student==false && user.is_parent==false) { %>
+                                <a href="assign_report?id=<%= report.report_id %>" class="btn btn-primary"
+                                    style="background: #daa520;">Assign
+                                    Yourself</a>
+
+                                <% } }%>
                     </div>
                     <hr class="mb-0 pb-0">
                     <div class="card">

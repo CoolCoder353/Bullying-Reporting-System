@@ -25,7 +25,16 @@ module.exports = {
                 callback(err, null);
                 return;
             }
-            callback(null, results);
+
+            var reports = [];
+            results.forEach((report) => {
+                //Update the status from a number to text
+                report.code = report.status;
+                report.status = Object.keys(report_status).find(key => report_status[key] === report.status);
+                logger.info(`New report found: ${report.report_id}, status: ${report.status}, code: ${report.code}`);
+                reports.push(report);
+            });
+            callback(null, reports);
         });
     },
 
@@ -38,7 +47,15 @@ module.exports = {
                 return;
             }
             logger.debug(`Found ${results.length} reports.`);
-            callback(null, results);
+            var reports = [];
+            results.forEach((report) => {
+                //Update the status from a number to text
+                report.code = report.status;
+                report.status = Object.keys(report_status).find(key => report_status[key] === report.status);
+                logger.info(`New report found: ${report.report_id}, status: ${report.status}, code: ${report.code}`);
+                reports.push(report);
+            });
+            callback(null, reports);
         });
     },
 
@@ -66,6 +83,7 @@ module.exports = {
             const report = results[0];
 
             //Update the status from a number to text
+            report.code = report.status;
             report.status = Object.keys(report_status).find(key => report_status[key] === report.status);
 
             db.query('SELECT assigned_users.`user_id`, assigned_users.`datetime`, users.* FROM `assigned_users` join users WHERE `report_id` = ? AND assigned_users.user_id = users.user_ID ORDER BY datetime', [report_id], (err, results) => {
@@ -159,6 +177,85 @@ module.exports = {
                 return;
             }
             callback(null, results);
+        });
+    },
+    updateReportStatus: function (report_id, status, user_id, callback) {
+        logger.debug(`Updating report ${report_id} status to ${status} by user ${user_id}`);
+
+        if (user_id != '') {
+            db.query('SELECT * FROM `assigned_users` WHERE `report_id` = ? AND `user_id` = ?', [report_id, user_id], (err, results) => {
+                if (err) {
+                    logger.error(`Error getting assigned users for ${report_id}: ${err}`);
+                    callback(err, null);
+                    return;
+                }
+                if (results.length === 0) {
+                    logger.warn(`User ${user_id} is not assigned to report ${report_id}`);
+                    callback(null, null);
+                    return;
+                }
+                //If the user is in the assigned users, update the status
+                if (IsIn(user_id, results)) {
+                    db.query('UPDATE `report` SET `status` = ? WHERE `report_id` = ?', [status, report_id], (err, results) => {
+                        if (err) {
+                            logger.error(`Error updating report ${report_id}: ${err}`);
+                            callback(err, null);
+                            return;
+                        }
+                        callback(null, results);
+                    });
+                }
+
+            });
+
+        }
+        else {
+            db.query('UPDATE `report` SET `status` = ? WHERE `report_id` = ?', [status, report_id], (err, results) => {
+                if (err) {
+                    logger.error(`Error updating report ${report_id}: ${err}`);
+                    callback(err, null);
+                    return;
+                }
+                callback(null, results);
+            });
+        }
+    },
+    removeReport: function (report_id, user_id, callback) {
+        logger.warn(`Removing report ${report_id} by user ${user_id}`);
+        db.query('DELETE FROM `report` WHERE `report_id` = ?', [report_id], (err, results) => {
+            if (err) {
+                logger.error(`Error removing report ${report_id}: ${err}`);
+                callback(err, null);
+                return;
+            }
+            else {
+                db.query('DELETE FROM `message` WHERE `report_id` = ?', [report_id], (err, results) => {
+                    if (err) {
+                        logger.error(`Error removing messages for report ${report_id}: ${err}`);
+                        callback(err, null);
+                        return;
+                    } else {
+                        db.query('DELETE FROM `assigned_users` WHERE `report_id` = ?', [report_id], (err, results) => {
+                            if (err) {
+                                logger.error(`Error removing assigned users for report ${report_id}: ${err}`);
+                                callback(err, null);
+                                return;
+                            } else {
+                                db.query('DELETE FROM `reported_users` WHERE `report_id` = ?', [report_id], (err, results) => {
+                                    if (err) {
+                                        logger.error(`Error removing reported users for report ${report_id}: ${err}`);
+                                        callback(err, null);
+                                        return;
+                                    }
+                                    callback(null, results);
+                                });
+                            }
+
+                        });
+                    }
+                });
+            }
+
         });
     }
 };

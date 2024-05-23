@@ -4,6 +4,7 @@ const path = require('path');
 const db = require(path.join(process.cwd(), 'config', 'db'));
 const crypto = require('crypto');
 const { error } = require('console');
+const e = require('express');
 const logger = require(path.join(process.cwd(), 'middleware', 'logger'));
 
 const check = require(path.join(process.cwd(), 'middleware', 'check'));
@@ -233,7 +234,18 @@ module.exports = function (passport) {
                 return;
             }
             logger.info(`Generating full report for ${report_id}`);
-            res.render('report_details', { report: report, user: req.user });
+
+            var status = {};
+            if (report.code == report_status.PENDING) {
+                status = { status: "Fixing", code: report_status.FIXING };
+            }
+            else if (report.code == report_status.FIXING) {
+                status = { status: "Solved", code: report_status.SOLVED };
+            } else {
+                status = { status: "Pending", code: report_status.PENDING };
+            }
+
+            res.render('report_details', { report: report, status_code: status, user: req.user });
         });
 
     });
@@ -293,7 +305,63 @@ module.exports = function (passport) {
         });
     });
 
+    router.get("/update_status", checkAuthenticated, (req, res) => {
+        const status = req.query.status;
+        const report_id = req.query.id;
+        let user_id = req.user?.user_id;
 
+        if (status === undefined || status === '') {
+            res.status(400).send('Status is required');
+            return;
+        }
+        if (report_id === undefined || report_id === '') {
+            res.status(400).send('Report is required');
+            return;
+        }
+
+        //If staff, they dont need to be assigned to edit it.
+        if (!(req.user?.is_student) || !(req.user?.is_parent)) {
+            user_id = '';
+        }
+        logger.info(`Updating status for report: ${report_id} to ${status}`);
+
+        report_manager.updateReportStatus(report_id, status, user_id, (err) => {
+            if (err) {
+                logger.error(`Error updating status for report: ${report_id}: ${err}`);
+                res.status(500).send('Server error updating status.');
+                return;
+            }
+            logger.info(`Status updated for report: ${report_id}`);
+            res.redirect('/view_full_report?id=' + report_id);
+        });
+
+    });
+
+    //ONLY TEACHERS CAN DELETE REPORTS
+    router.get("/delete_report", checkAuthenticated, checkTeacher, (req, res) => {
+        const user_id = req.user?.user_id;
+        const report_id = req.query.id;
+
+        if (report_id === undefined || report_id === '') {
+            res.status(400).send('Report is required');
+            return;
+        }
+
+        logger.warn(`Deleting report: ${report_id}, user${user_id}`);
+
+        report_manager.removeReport(report_id, user_id, (err) => {
+            if (err) {
+                logger.error(`Error deleting report: ${report_id}: ${err}`);
+                res.status(500).send('Server error deleting report.');
+                return;
+            }
+            else {
+                logger.info(`Report deleted: ${report_id}`);
+                res.redirect('/view_all_reports');
+            }
+
+        });
+    });
 
     return router;
 }
