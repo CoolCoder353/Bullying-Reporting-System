@@ -35,7 +35,7 @@ module.exports = function (passport) {
                     logger.error(`Error logging in user: ${err}`);
                     return next(err);
                 }
-                return res.redirect('/authenticated');
+                return res.redirect('/view_assigned_reports');
             });
         })(req, res, next);
     });
@@ -84,6 +84,38 @@ module.exports = function (passport) {
         logger.info('User successfully authenticated');
         res.send("Welcome, authenticated user!<br><a href='/logout'>Logout</a><br><a href='/help'>Help</a><br><a href='/submit_incident'>Submit Incident</a><br><a href='/'>Home</a><br><a href='/view_reports'>View Reports</a><br><a href='/view_assigned_reports'>View Assigned Reports</a>");
 
+    });
+    router.post('/public/register', (req, res) => {
+        const username = req.body.username;
+        const password = req.body.password;
+        const firstname = req.body.firstname || "Test";
+        const lastname = req.body.lastname || "Student";
+        const is_parent = req.body.is_parent || 0;
+        const is_student = req.body.is_student || 1;
+
+        if (username === '' || password === '') {
+            res.status(400).send('Username and password are required');
+            return;
+        }
+        console.log('Registering user: ', username, password, firstname, lastname, is_parent, is_student, "with saltRounds: ", saltRounds);
+        bcrypt.hash(password, saltRounds, (err, hashedPassword) => {
+            if (err) {
+                console.error(err);
+                res.status(500).send('Server error');
+            } else {
+                db.query('INSERT INTO users (username, firstname, lastname, password, is_parent, is_student) VALUES (?, ?, ?, ?, ?, ?)',
+                    [username, firstname, lastname, hashedPassword, is_parent, is_student],
+                    (err, results) => {
+                        if (err) {
+                            console.error(err);
+                            res.status(500).send('Server error');
+                        } else {
+                            res.redirect('/login');
+                        }
+                    });
+
+            }
+        });
     });
 
     router.get('/login', (req, res) => {
