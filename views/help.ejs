@@ -18,6 +18,30 @@
 <body>
 
     <%- include('partials/nav') %>
+        <div class="container">
+            <div class="row">
+                <% const sites=[ {name: 'styme.com' , url: 'http://styme.com' }, {name: 'Suicide Prevention Lifeline' ,
+                    url: 'https://suicidepreventionlifeline.org/' }, {name: 'MHA National' ,
+                    url: 'https://www.mhanational.org/' }, {name: 'NAMI' , url: 'https://www.nami.org/' }, {name: 'AFSP'
+                    , url: 'https://afsp.org/' }, {name: 'Crisis Text Line' , url: 'https://www.crisistextline.org/' },
+                    {name: 'Mental Health' , url: 'https://www.mentalhealth.gov/' }, {name: 'SAMHSA' ,
+                    url: 'https://www.samhsa.gov/' }, {name: 'APA' , url: 'https://www.apa.org/topics/mental-health' },
+                    {name: 'CDC' , url: 'https://www.cdc.gov/mentalhealth/index.htm' } ] %>
+                    <% sites.forEach(site=> { %>
+                        <div class="col-sm-6 col-md-4 col-lg-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">
+                                        <%= site.name %>
+                                    </h5>
+                                    <a href="<%= site.url %>" class="btn btn-primary" target="_blank">Visit Site</a>
+                                </div>
+                            </div>
+                        </div>
+                        <% }) %>
+            </div>
+        </div>
+
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
         <script src="assets/js/script.min.js"></script>
 
